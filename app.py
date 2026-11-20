@@ -4,12 +4,7 @@ import psycopg2
 
 app = Flask(__name__)
 
-# Si ejecutas la app DENTRO de tu VM (ssh -p313 cc3201@cc3201.dcc.uchile.cl):
-#   host = "localhost", port = 5432
-# Si ejecutas la app DESDE TU PC conectándote a la BD del servidor:
-#   host = "cc3201.dcc.uchile.cl", port = 5513
-# Por seguridad (como pide la wiki), crea un usuario 'webuser' de solo lectura
-# y reemplaza 'cc3201' por 'webuser' y su clave.
+
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "port": int(os.environ.get("DB_PORT", 5432)),
