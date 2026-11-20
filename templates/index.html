@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Transparencia UChile</title>
+    <title>Dotados con Base</title>
     <style>
         table, th, td {
             border: 1px solid black;
@@ -14,10 +14,10 @@
 
 <body>
 
-    <h1>Transparencia UChile</h1>
+    <h1>Steam DB pero mejor</h1>
 
     <form action="{{ url_for('index') }}" method="get">
-        Buscar por apellido paterno:<br>
+        Buscar por nombre:<br>
         <input type="text" name="ap" value="{{ ap if ap is not none else '' }}"><br>
         <input type="submit" value="Submit">
     </form>
