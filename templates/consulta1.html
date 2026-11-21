@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Buscador de Juegos · SteamDB CC3201{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Inicio</a>
+        <span>/</span>
+        <span>Buscador de Juegos</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-dark btn-sm">&larr; Volver</a>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h1>Buscador de Catálogo</h1>
+    </div>
+
+    <form action="{{ url_for('consulta1') }}" method="get" class="filter-bar">
+        <div class="field">
+            <label for="q">Nombre</label>
+            <input type="text" id="q" name="q" placeholder="Buscar juego..." value="{{ q|default('') }}">
+        </div>
+
+        <div class="field">
+            <label for="genero">Género</label>
+            <select id="genero" name="genero">
+                <option value="">Todos</option>
+                {% for g in generos|default([]) %}
+                    <option value="{{ g[0] }}" {% if genero_sel == g[0]|string %}selected{% endif %}>{{ g[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="plataforma">Plataforma</label>
+            <select id="plataforma" name="plataforma">
+                <option value="">Todas</option>
+                {% for p in plataformas|default([]) %}
+                    <option value="{{ p[0] }}" {% if plataforma_sel == p[0]|string %}selected{% endif %}>{{ p[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-buttons">
+            <button type="submit" class="btn btn-blue">Filtrar</button>
+            <a href="{{ url_for('consulta1') }}" class="btn btn-dark">Limpiar</a>
+        </div>
+    </form>
+
+    <div class="table-container">
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th class="col-id">AppID</th>
+                    <th>Nombre</th>
+                    <th>Lanzamiento</th>
+                    <th class="num">Precio</th>
+                    <th class="num">Reseñas (+)</th>
+                    <th class="num">Reseñas (-)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in resultados|default([]) %}
+                <tr>
+                    <td class="col-id mono">{{ row[0] }}</td>
+                    <td class="col-name">{{ row[1] }}</td>
+                    <td class="muted">{{ row[2] }}</td>
+                    <td class="num mono">{{ row[3] }}</td>
+                    <td class="num mono pos">{{ row[4] }}</td>
+                    <td class="num mono neg">{{ row[5] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-cell">
+                        Sin resultados para mostrar. Ejecuta un filtro o conecta la Consulta 1 en <code>app.py</code>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

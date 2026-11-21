@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Estadísticas · SteamDB CC3201{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Inicio</a>
+        <span>/</span>
+        <span>Estadísticas por Género</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-dark btn-sm">&larr; Volver</a>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h1>Tiempo Jugado y Valoraciones por Género</h1>
+    </div>
+
+    <form action="{{ url_for('consulta3') }}" method="get" class="filter-bar">
+        <div class="field">
+            <label for="idioma">Soporte en Inglés</label>
+            <select id="idioma" name="idioma">
+                <option value="" {% if idioma_sel == '' %}selected{% endif %}>Todos</option>
+                <option value="true" {% if idioma_sel == 'true' %}selected{% endif %}>Sí (english = true)</option>
+                <option value="false" {% if idioma_sel == 'false' %}selected{% endif %}>No (english = false)</option>
+            </select>
+        </div>
+
+        <div class="filter-buttons">
+            <button type="submit" class="btn btn-blue">Actualizar</button>
+        </div>
+    </form>
+
+    <div class="table-container">
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th>Género</th>
+                    <th class="num">Total Juegos</th>
+                    <th class="num">Promedio (min)</th>
+                    <th class="num">Mediana (min)</th>
+                    <th class="num">Reseñas (+)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in resultados|default([]) %}
+                <tr>
+                    <td class="col-name">{{ row[0] }}</td>
+                    <td class="num mono">{{ row[1] }}</td>
+                    <td class="num mono">{{ row[2] }}</td>
+                    <td class="num mono">{{ row[3] }}</td>
+                    <td class="num mono pos">{{ row[4] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-cell">
+                        Sin datos cargados. Conecta la Consulta 3 en <code>app.py</code>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Desarrolladores · SteamDB CC3201{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Inicio</a>
+        <span>/</span>
+        <span>Ranking de Desarrolladores</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-dark btn-sm">&larr; Volver</a>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h1>Ranking de Desarrolladores por Categoría</h1>
+    </div>
+
+    <form action="{{ url_for('consulta2') }}" method="get" class="filter-bar">
+        <div class="field">
+            <label for="categoria">Categoría</label>
+            <select id="categoria" name="categoria">
+                <option value="">Todas las categorías</option>
+                {% for c in categorias|default([]) %}
+                    <option value="{{ c[0] }}" {% if categoria_sel == c[0]|string %}selected{% endif %}>{{ c[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="min_juegos">Mínimo de juegos</label>
+            <input type="number" id="min_juegos" name="min_juegos" min="1" value="{{ min_juegos|default(3) }}">
+        </div>
+
+        <div class="filter-buttons">
+            <button type="submit" class="btn btn-blue">Aplicar</button>
+            <a href="{{ url_for('consulta2') }}" class="btn btn-dark">Limpiar</a>
+        </div>
+    </form>
+
+    <div class="table-container">
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th class="col-id">#</th>
+                    <th>Desarrollador</th>
+                    <th class="num">Juegos</th>
+                    <th class="num">Reseñas (+)</th>
+                    <th class="num">Reseñas (-)</th>
+                    <th class="num">Aprobación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in resultados|default([]) %}
+                <tr>
+                    <td class="col-id muted mono">{{ loop.index }}</td>
+                    <td class="col-name">{{ row[0] }}</td>
+                    <td class="num mono">{{ row[1] }}</td>
+                    <td class="num mono pos">{{ row[2] }}</td>
+                    <td class="num mono neg">{{ row[3] }}</td>
+                    <td class="num mono">{{ row[4] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-cell">
+                        Sin datos cargados. Conecta la Consulta 2 en <code>app.py</code>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

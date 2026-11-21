@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio · Dotados con Base CC3201{% endblock %}
+
+{% block content %}
+<section class="hero-intro">
+    <h1>Top consultas más buscadas en Steam!!</h1>
+    <p class="hero-desc">
+        En esta aplicación web podras encontrar muchos juegos que te interesen en Steam y todas esas cosas (info)
+    </p>
+
+    <div class="hero-pills">
+        <span class="meta-pill"><strong>27,075</strong> Juegos</span>
+        <span class="meta-pill"><strong>17,953</strong> Desarrolladores</span>
+        <span class="meta-pill"><strong>29</strong> Géneros</span>
+        <span class="meta-pill"><strong>29</strong> Categorías</span>
+    </div>
+</section>
+
+<section class="queries-grid">
+    <!-- CONSULTA 1 -->
+    <article class="db-panel">
+        <div>
+            <div class="db-panel-head">
+                <a href="{{ url_for('consulta1') }}" class="panel-title-link">Buscador de Catálogo &rarr;</a>
+                <span class="panel-tag">Consulta 1</span>
+            </div>
+
+            <div class="db-panel-rows">
+                <div class="info-row">
+                    <span class="row-key">Objetivo</span>
+                    <span class="row-val">Filtrar juegos del catálogo</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Parámetros</span>
+                    <span class="row-val val-blue">Nombre, Género, Plataforma</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Métricas</span>
+                    <span class="row-val val-green">Precio y reseñas (+ / -)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel-foot">
+            <a href="{{ url_for('consulta1') }}" class="btn btn-blue btn-full">Ir a Consulta 1</a>
+        </div>
+    </article>
+
+    <!-- CONSULTA 2 -->
+    <article class="db-panel">
+        <div>
+            <div class="db-panel-head">
+                <a href="{{ url_for('consulta2') }}" class="panel-title-link">Ranking de Desarrolladores &rarr;</a>
+                <span class="panel-tag">Consulta 2</span>
+            </div>
+
+            <div class="db-panel-rows">
+                <div class="info-row">
+                    <span class="row-key">Objetivo</span>
+                    <span class="row-val">Agrupar estudios por categoría</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Parámetros</span>
+                    <span class="row-val val-blue">Categoría y mínimo de juegos</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Métricas</span>
+                    <span class="row-val val-green">Total juegos y % aprobación</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel-foot">
+            <a href="{{ url_for('consulta2') }}" class="btn btn-blue btn-full">Ir a Consulta 2</a>
+        </div>
+    </article>
+
+    <!-- CONSULTA 3 -->
+    <article class="db-panel">
+        <div>
+            <div class="db-panel-head">
+                <a href="{{ url_for('consulta3') }}" class="panel-title-link">Estadísticas por Género &rarr;</a>
+                <span class="panel-tag">Consulta 3</span>
+            </div>
+
+            <div class="db-panel-rows">
+                <div class="info-row">
+                    <span class="row-key">Objetivo</span>
+                    <span class="row-val">Comparar tiempo jugado</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Parámetros</span>
+                    <span class="row-val val-blue">Filtro de soporte en inglés</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Métricas</span>
+                    <span class="row-val val-green">Promedio vs. mediana (min)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="db-panel-foot">
+            <a href="{{ url_for('consulta3') }}" class="btn btn-blue btn-full">Ir a Consulta 3</a>
+        </div>
+    </article>
+</section>
+{% endblock %}
