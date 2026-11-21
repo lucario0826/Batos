@@ -1,5 +1,7 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+
+import queries
 
 
 app = Flask(__name__)
@@ -12,28 +14,24 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
+# Mientras no esté la base real, el buscador usa juegos inventados.
+DB_DEMO = os.environ.get("DB_DEMO", "true").lower() == "true"
+
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    q = request.args.get("q", "").strip()
+    titulo, sql, columnas, resultados, error = None, None, [], [], None
 
+    if q:
+        try:
+            titulo, sql = queries.resolve(q)
+            columnas, resultados = queries.run(sql, DB_CONFIG, DB_DEMO)
+        except Exception as e:
+            error = str(e)
 
-@app.route("/consulta1", methods=["GET"])
-def consulta1():
-    # TODO: Conectar Consulta 1 
-    return render_template("consulta1.html")
-
-
-@app.route("/consulta2", methods=["GET"])
-def consulta2():
-    # TODO: Conectar Consulta 2 
-    return render_template("consulta2.html")
-
-
-@app.route("/consulta3", methods=["GET"])
-def consulta3():
-    # TODO: Conectar Consulta 3 
-    return render_template("consulta3.html")
+    return render_template("index.html", q=q, titulo=titulo, sql=sql, columnas=columnas,
+                           resultados=resultados, error=error, ejemplos=queries.EXAMPLES)
 
 
 if __name__ == "__main__":
