@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Catálogo de Steam · CC3201{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <a href="{{ url_for('index') }}" class="brand">
+                <span class="brand-name">Dotados con Base <span class="brand-sub">· CC3201</span></span>
+            </a>
+
+            <nav class="topnav">
+                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Inicio</a>
+                <a href="{{ url_for('consulta1') }}" class="{% if request.endpoint == 'consulta1' %}active{% endif %}">Juegos</a>
+                <a href="{{ url_for('consulta2') }}" class="{% if request.endpoint == 'consulta2' %}active{% endif %}">Desarrolladores</a>
+                <a href="{{ url_for('consulta3') }}" class="{% if request.endpoint == 'consulta3' %}active{% endif %}">Estadísticas</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        {% if error %}
+            <div class="error-banner">
+                <span>ERROR SQL:</span> {{ error }}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>Hito 3 · Grupo 13</span>
+            <span>Universidad de Chile · FCFM</span>
+        </div>
+    </footer>
+
+</body>
+</html>
