@@ -1,0 +1,10 @@
+{# Tabla genérica: pasar `resultados` (lista de filas) y opcionalmente `columnas`. #}
+{% if resultados %}
+<p>## {{ resultados|length }} filas</p>
+<table>
+  {% if columnas %}<tr>{% for c in columnas %}<th>{{ c }}</th>{% endfor %}</tr>{% endif %}
+  {% for fila in resultados %}
+  <tr>{% for v in fila %}<td>{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+{% endif %}
