@@ -39,20 +39,37 @@ def consulta1():
     error = None
 
     try:
-        generos = query_db("SELECT generoid, genero FROM public.generos ORDER BY genero;")
-        plataformas = query_db("SELECT plataformaid, plataforma FROM public.plataformas ORDER BY plataforma;")
-        resultados = query_db("""
-            SELECT DISTINCT j.gameid, j.nombre, j.fechalanzamiento, j.precio,
-                            j.cantidadresenhaspositivas, j.cantidadresenhasnegativas
-            FROM public.juego j
-            LEFT JOIN public.clasificadoen cl ON j.gameid = cl.gameid
-            LEFT JOIN public.disponibleen di ON j.gameid = di.gameid
-            WHERE (%s = '' OR j.nombre ILIKE %s)
-              AND (%s = '' OR cl.generoid::text = %s)
-              AND (%s = '' OR di.plataformaid::text = %s)
-            ORDER BY j.cantidadresenhaspositivas DESC
+        generos = query_db("SELECT generoid, genero FROM generos ORDER BY genero;")
+        plataformas = query_db("SELECT plataformaid, plataforma FROM plataformas ORDER BY plataforma;")
+
+        joins = []
+        conds = []
+        params = []
+
+        if q:
+            conds.append("j.nombre ILIKE %s")
+            params.append(f"%{q}%")
+        if gen:
+            joins.append("JOIN clasificadoen cl ON j.gameid = cl.gameid")
+            conds.append("cl.generoid = %s")
+            params.append(gen)
+        if plat:
+            joins.append("JOIN disponibleen di ON j.gameid = di.gameid")
+            conds.append("di.plataformaid = %s")
+            params.append(plat)
+
+        where = f"WHERE {' AND '.join(conds)}" if conds else ""
+
+        sql = f"""
+            SELECT j.gameid, j.nombre, j.fechalanzamiento, j.precio,
+                   j.cantidadresenhaspositivas, j.cantidadresenhasnegativas
+            FROM juego j
+            {' '.join(joins)}
+            {where}
+            ORDER BY j.cantidadresenhaspositivas DESC NULLS LAST
             LIMIT 50;
-        """, (q, f"%{q}%", gen, gen, plat, plat))
+        """
+        resultados = query_db(sql, tuple(params))
     except Exception as e:
         error = str(e)
 
@@ -71,30 +88,51 @@ def consulta1():
 @app.route("/consulta2", methods=["GET"])
 def consulta2():
     cat = request.args.get("categoria", "").strip()
-    min_j = int(request.args.get("min_juegos") or 3)
+    min_j_raw = request.args.get("min_juegos", "").strip()
 
     categorias = []
     resultados = []
     error = None
+    min_j = 3
 
     try:
-        categorias = query_db("SELECT categoriaid, categoria FROM public.categorias ORDER BY categoria;")
+        min_j = max(1, int(min_j_raw)) if min_j_raw else 3
+        categorias = query_db("SELECT categoriaid, categoria FROM categorias ORDER BY categoria;")
 
-        resultados = query_db("""
-            SELECT d.nombredesarrollador, COUNT(DISTINCT j.gameid),
-                   SUM(j.cantidadresenhaspositivas), SUM(j.cantidadresenhasnegativas),
-                   ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
-                         NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%'
-            FROM public.desarrolladores d
-            JOIN public.creadopor cp ON d.desarrolladorid = cp.desarrolladorid
-            JOIN public.juego j ON cp.gameid = j.gameid
-            LEFT JOIN public.posee po ON j.gameid = po.gameid
-            WHERE (%s = '' OR po.categoriaid::text = %s)
-            GROUP BY d.desarrolladorid, d.nombredesarrollador
-            HAVING COUNT(DISTINCT j.gameid) >= %s
-            ORDER BY SUM(j.cantidadresenhaspositivas) DESC
-            LIMIT 50;
-        """, (cat, cat, min_j))
+        if cat:
+            resultados = query_db("""
+                SELECT d.nombredesarrollador,
+                       COUNT(j.gameid),
+                       SUM(j.cantidadresenhaspositivas),
+                       SUM(j.cantidadresenhasnegativas),
+                       ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
+                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%'
+                FROM desarrolladores d
+                JOIN creadopor cp ON d.desarrolladorid = cp.desarrolladorid
+                JOIN juego j ON cp.gameid = j.gameid
+                JOIN posee po ON j.gameid = po.gameid
+                WHERE po.categoriaid = %s
+                GROUP BY d.desarrolladorid, d.nombredesarrollador
+                HAVING COUNT(j.gameid) >= %s
+                ORDER BY SUM(j.cantidadresenhaspositivas) DESC NULLS LAST
+                LIMIT 50;
+            """, (cat, min_j))
+        else:
+            resultados = query_db("""
+                SELECT d.nombredesarrollador,
+                       COUNT(j.gameid),
+                       SUM(j.cantidadresenhaspositivas),
+                       SUM(j.cantidadresenhasnegativas),
+                       ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
+                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%'
+                FROM desarrolladores d
+                JOIN creadopor cp ON d.desarrolladorid = cp.desarrolladorid
+                JOIN juego j ON cp.gameid = j.gameid
+                GROUP BY d.desarrolladorid, d.nombredesarrollador
+                HAVING COUNT(j.gameid) >= %s
+                ORDER BY SUM(j.cantidadresenhaspositivas) DESC NULLS LAST
+                LIMIT 50;
+            """, (min_j,))
     except Exception as e:
         error = str(e)
 
@@ -119,9 +157,9 @@ def consulta3():
             SELECT g.genero, COUNT(DISTINCT j.gameid),
                    ROUND(AVG(j.averageplaytime), 1), ROUND(AVG(j.medianplaytime), 1),
                    SUM(j.cantidadresenhaspositivas)
-            FROM public.generos g
-            JOIN public.clasificadoen cl ON g.generoid = cl.generoid
-            JOIN public.juego j ON cl.gameid = j.gameid
+            FROM generos g
+            JOIN clasificadoen cl ON g.generoid = cl.generoid
+            JOIN juego j ON cl.gameid = j.gameid
             WHERE (%s = '' OR j.english::text = %s)
             GROUP BY g.generoid, g.genero
             ORDER BY COUNT(DISTINCT j.gameid) DESC;
