@@ -217,7 +217,30 @@ def consulta2():
         resultados=resultados,
         error=error,
     )
-
+    
+@app.route("/api/juegos", methods=["GET"])
+def api_juegos():
+    q = request.args.get("q", "").strip()
+    try:
+        if q:
+            rows = query_db("""
+                SELECT gameid, nombre
+                FROM juego
+                WHERE nombre ILIKE %s
+                ORDER BY cantidadresenhaspositivas DESC NULLS LAST, nombre
+                LIMIT 10;
+            """, (f"%{q}%",))
+        else:
+            rows = query_db("""
+                SELECT gameid, nombre
+                FROM juego
+                ORDER BY cantidadresenhaspositivas DESC NULLS LAST, nombre
+                LIMIT 10;
+            """)
+        return jsonify([{"gameid": r[0], "nombre": r[1]} for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        
 @app.route("/consulta3", methods=["GET"])
 def consulta3():
     gameid = request.args.get("gameid", "").strip()
