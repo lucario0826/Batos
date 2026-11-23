@@ -224,4 +224,50 @@
         </div>
     </section>
 </form>
+<script>
+(function () {
+    const input = document.getElementById("buscar");
+    const select = document.getElementById("gameid");
+    if (!input || !select) return;
+    let timer = null;
+    let controller = null;
+    function actualizarOpciones(juegos) {
+        const currentVal = select.value;
+        const currentText = select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : "";
+        const frag = document.createDocumentFragment();
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "-- Elige un juego --";
+        frag.appendChild(placeholder);
+        let foundCurrent = false;
+        juegos.forEach(j => {
+            const opt = document.createElement("option");
+            opt.value = j.gameid;
+            opt.textContent = j.nombre;
+            if (String(j.gameid) === String(currentVal) && currentVal !== "") {
+                opt.selected = true;
+                foundCurrent = true;
+            }
+            frag.appendChild(opt);
+        });
+        if (currentVal && !foundCurrent) {
+            const keep = document.createElement("option");
+            keep.value = currentVal;
+            keep.textContent = currentText;
+            keep.selected = true;
+            frag.insertBefore(keep, frag.children[1] || null);
+        }
+        select.innerHTML = "";
+        select.appendChild(frag);
+    }
+    input.addEventListener("input", function () {
+        clearTimeout(timer);
+        const q = this.value.trim();
+        timer = setTimeout(async function () {
+            if (controller) controller.abort();
+            controller = new AbortController();
+            try {
+                const res = await fetch("{{ url_for('api_juegos') }}?q=" + encodeURIComponent(q), {
+                    signal: controller.signal
+                });
 {% endblock %}
