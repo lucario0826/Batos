@@ -220,31 +220,106 @@ def consulta2():
 
 @app.route("/consulta3", methods=["GET"])
 def consulta3():
-    idioma = request.args.get("idioma", "").strip()
+    gameid = request.args.get("gameid", "").strip()
+
+    operador_fecha = request.args.get("operador_fecha", "").strip()
+    operador_anio = request.args.get("operador_anio", "").strip()
+    operador_tiempo = request.args.get("operador_tiempo", "").strip()
+    operador_positivas = request.args.get("operador_positivas", "").strip()
+    operador_negativas = request.args.get("operador_negativas", "").strip()
 
     resultados = []
+    juegos = []
+    referencia = None
     error = None
 
+    operadores = {
+        "mayor": ">",
+        "menor": "<",
+    }
+
     try:
+        juegos = query_db("""
+            SELECT gameid, nombre
+            FROM juego
+            ORDER BY nombre;
+        """)
+
+        if gameid:
+            referencia = query_db("""
+                SELECT gameid, nombre, fechalanzamiento,
+                       EXTRACT(YEAR FROM fechalanzamiento),
+                       averageplaytime,
+                       cantidadresenhaspositivas,
+                       cantidadresenhasnegativas
+                FROM juego
+                WHERE gameid = %s;
+            """, (gameid,))
+
+            if not referencia:
+                raise ValueError("El juego seleccionado no existe.")
+
+            conds = ["j.gameid <> %s"]
+            params = [gameid]
+
+            comparaciones = [
+                ("operador_fecha", operador_fecha,
+                 "j.fechalanzamiento", "r.fechalanzamiento"),
+                ("operador_anio", operador_anio,
+                 "EXTRACT(YEAR FROM j.fechalanzamiento)",
+                 "EXTRACT(YEAR FROM r.fechalanzamiento)"),
+                ("operador_tiempo", operador_tiempo,
+                 "j.averageplaytime", "r.averageplaytime"),
+                ("operador_positivas", operador_positivas,
+                 "j.cantidadresenhaspositivas",
+                 "r.cantidadresenhaspositivas"),
+                ("operador_negativas", operador_negativas,
+                 "j.cantidadresenhasnegativas",
+                 "r.cantidadresenhasnegativas")
+            ]
+
+            for nombre_filtro, operador, columna_j, columna_r in comparaciones:
+                if operador:
+                    if operador not in operadores:
+                        raise ValueError("Operador de comparación inválido.")
+
+                    conds.append(
+                        f"{columna_j} {operadores[operador]} ({columna_r})"
+                    )
+
+
         resultados = query_db("""
-            SELECT g.genero, COUNT(DISTINCT j.gameid),
-                   ROUND(AVG(j.averageplaytime), 1), ROUND(AVG(j.medianplaytime), 1),
-                   SUM(j.cantidadresenhaspositivas)
-            FROM generos g
-            JOIN clasificadoen cl ON g.generoid = cl.generoid
-            JOIN juego j ON cl.gameid = j.gameid
-            WHERE (%s = '' OR j.english::text = %s)
-            GROUP BY g.generoid, g.genero
-            ORDER BY COUNT(DISTINCT j.gameid) DESC;
-        """, (idioma, idioma))
+                SELECT
+                    j.gameid,
+                    j.nombre,
+                    j.fechalanzamiento,
+                    EXTRACT(YEAR FROM j.fechalanzamiento) AS anio,
+                    j.averageplaytime,
+                    j.cantidadresenhaspositivas,
+                    j.cantidadresenhasnegativas
+                FROM juego j
+                CROSS JOIN juego r
+                WHERE r.gameid = %s
+                  AND {" AND ".join(conds)}
+                ORDER BY j.cantidadresenhaspositivas DESC NULLS LAST
+                LIMIT 50;
+        """, (gameid, *params))
+
     except Exception as e:
         error = str(e)
 
     return render_template(
         "consulta3.html",
-        idioma_sel=idioma,
+        juegos=juegos,
+        gameid=gameid,
+        referencia=referencia,
+        operador_fecha=operador_fecha,
+        operador_anio=operador_anio,
+        operador_tiempo=operador_tiempo,
+        operador_positivas=operador_positivas,
+        operador_negativas=operador_negativas,
         resultados=resultados,
-        error=error,
+        error=error
     )
 
 if __name__ == "__main__":
