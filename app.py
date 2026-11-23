@@ -15,11 +15,11 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
-def query_db(sql, params=()):
+def query_db(sql, params=None):
     """Abre conexión, ejecuta la consulta y devuelve las filas."""
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, params)
+            cur.execute(sql, params or None)
             return cur.fetchall()
 
 @app.route("/", methods=["GET"])
@@ -221,9 +221,9 @@ def consulta2():
 @app.route("/consulta3", methods=["GET"])
 def consulta3():
     gameid = request.args.get("gameid", "").strip()
+    buscar = request.args.get("buscar", "").strip()
 
     operador_fecha = request.args.get("operador_fecha", "").strip()
-    operador_anio = request.args.get("operador_anio", "").strip()
     operador_tiempo = request.args.get("operador_tiempo", "").strip()
     operador_positivas = request.args.get("operador_positivas", "").strip()
     operador_negativas = request.args.get("operador_negativas", "").strip()
@@ -239,16 +239,25 @@ def consulta3():
     }
 
     try:
-        juegos = query_db("""
-            SELECT gameid, nombre
-            FROM juego
-            ORDER BY nombre;
-        """)
+        if buscar:
+            juegos = query_db("""
+                SELECT gameid, nombre
+                FROM juego
+                WHERE nombre ILIKE %s
+                ORDER BY cantidadresenhaspositivas DESC NULLS LAST, nombre
+                LIMIT 10;
+            """, (f"%{buscar}%",))
+        else:
+            juegos = query_db("""
+                SELECT gameid, nombre
+                FROM juego
+                ORDER BY cantidadresenhaspositivas DESC NULLS LAST, nombre
+                LIMIT 10;
+            """)
 
         if gameid:
             referencia = query_db("""
                 SELECT gameid, nombre, fechalanzamiento,
-                       EXTRACT(YEAR FROM fechalanzamiento),
                        averageplaytime,
                        cantidadresenhaspositivas,
                        cantidadresenhasnegativas
@@ -259,15 +268,15 @@ def consulta3():
             if not referencia:
                 raise ValueError("El juego seleccionado no existe.")
 
+            if not any(str(j[0]) == str(referencia[0][0]) for j in juegos):
+                juegos = [(referencia[0][0], referencia[0][1])] + list(juegos)[:9]
+
             conds = ["j.gameid <> %s"]
             params = [gameid]
 
             comparaciones = [
                 ("operador_fecha", operador_fecha,
                  "j.fechalanzamiento", "r.fechalanzamiento"),
-                ("operador_anio", operador_anio,
-                 "EXTRACT(YEAR FROM j.fechalanzamiento)",
-                 "EXTRACT(YEAR FROM r.fechalanzamiento)"),
                 ("operador_tiempo", operador_tiempo,
                  "j.averageplaytime", "r.averageplaytime"),
                 ("operador_positivas", operador_positivas,
@@ -292,7 +301,6 @@ def consulta3():
                     j.gameid,
                     j.nombre,
                     j.fechalanzamiento,
-                    EXTRACT(YEAR FROM j.fechalanzamiento) AS anio,
                     j.averageplaytime,
                     j.cantidadresenhaspositivas,
                     j.cantidadresenhasnegativas
@@ -301,7 +309,7 @@ def consulta3():
                 WHERE r.gameid = %s
                   AND {" AND ".join(conds)}
                 ORDER BY j.cantidadresenhaspositivas DESC NULLS LAST
-                LIMIT 50;
+                LIMIT 10;
             """, (gameid, *params))
 
     except Exception as e:
@@ -311,9 +319,9 @@ def consulta3():
         "consulta3.html",
         juegos=juegos,
         gameid=gameid,
+        buscar=buscar,
         referencia=referencia,
         operador_fecha=operador_fecha,
-        operador_anio=operador_anio,
         operador_tiempo=operador_tiempo,
         operador_positivas=operador_positivas,
         operador_negativas=operador_negativas,
