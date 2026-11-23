@@ -97,7 +97,7 @@
             <h1>Videojuegos Comparados</h1>
             <span class="panel-tag mono">
                 {% if ref %}
-                    {{ resultados|default([])|length }} resultado{{ 's' if resultados|default([])|length != 1 else '' }} (máx. 10)
+                    {{ resultados|default([])|length }} resultado{{ 's' if resultados|default([])|length != 1 else '' }} (máx. 30)
                 {% else %}
                     Esperando selección
                 {% endif %}
