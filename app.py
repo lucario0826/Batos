@@ -33,7 +33,7 @@ def index():
     sql_plataforma = """
         SELECT j.nombre,
                ROUND(j.cantidadresenhaspositivas * 100.0 /
-                     (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 1) || '%',
+                     (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 1) || '%%',
                j.cantidadresenhaspositivas,
                j.cantidadresenhasnegativas
         FROM juego j
@@ -104,13 +104,23 @@ def consulta1():
             conds.append("j.nombre ILIKE %s")
             params.append(f"%{q}%")
         if gen:
-            joins.append("JOIN clasificadoen cl ON j.gameid = cl.gameid")
-            conds.append("cl.generoid = %s")
-            params.append(gen)
+            try:
+                gen_id = int(gen)
+            except ValueError:
+                gen_id = None
+            if gen_id is not None:
+                joins.append("JOIN clasificadoen cl ON j.gameid = cl.gameid")
+                conds.append("cl.generoid = %s")
+                params.append(gen_id)
         if plat:
-            joins.append("JOIN disponibleen di ON j.gameid = di.gameid")
-            conds.append("di.plataformaid = %s")
-            params.append(plat)
+            try:
+                plat_id = int(plat)
+            except ValueError:
+                plat_id = None
+            if plat_id is not None:
+                joins.append("JOIN disponibleen di ON j.gameid = di.gameid")
+                conds.append("di.plataformaid = %s")
+                params.append(plat_id)
 
         where = f"WHERE {' AND '.join(conds)}" if conds else ""
 
@@ -147,20 +157,29 @@ def consulta2():
     categorias = []
     resultados = []
     error = None
-    min_j = 3
-
     try:
         min_j = max(1, int(min_j_raw)) if min_j_raw else 3
+    except ValueError:
+        min_j = 3
+
+    try:
         categorias = query_db("SELECT categoriaid, categoria FROM categorias ORDER BY categoria;")
 
+        cat_id = None
         if cat:
+            try:
+                cat_id = int(cat)
+            except ValueError:
+                cat_id = None
+
+        if cat_id is not None:
             resultados = query_db("""
                 SELECT d.nombredesarrollador,
                        COUNT(j.gameid),
                        SUM(j.cantidadresenhaspositivas),
                        SUM(j.cantidadresenhasnegativas),
-                       ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
-                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%'
+                       COALESCE(ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
+                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%%', 'N/A')
                 FROM desarrolladores d
                 JOIN creadopor cp ON d.desarrolladorid = cp.desarrolladorid
                 JOIN juego j ON cp.gameid = j.gameid
@@ -170,15 +189,15 @@ def consulta2():
                 HAVING COUNT(j.gameid) >= %s
                 ORDER BY SUM(j.cantidadresenhaspositivas) DESC NULLS LAST
                 LIMIT 50;
-            """, (cat, min_j))
+            """, (cat_id, min_j))
         else:
             resultados = query_db("""
                 SELECT d.nombredesarrollador,
                        COUNT(j.gameid),
                        SUM(j.cantidadresenhaspositivas),
                        SUM(j.cantidadresenhasnegativas),
-                       ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
-                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%'
+                       COALESCE(ROUND(SUM(j.cantidadresenhaspositivas) * 100.0 /
+                             NULLIF(SUM(j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 0), 1) || '%%', 'N/A')
                 FROM desarrolladores d
                 JOIN creadopor cp ON d.desarrolladorid = cp.desarrolladorid
                 JOIN juego j ON cp.gameid = j.gameid
