@@ -24,7 +24,59 @@ def query_db(sql, params=()):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    joyas_ocultas = []
+    top_windows = []
+    top_mac = []
+    top_linux = []
+    error = None
+
+    sql_plataforma = """
+        SELECT j.nombre,
+               ROUND(j.cantidadresenhaspositivas * 100.0 /
+                     (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 1) || '%',
+               j.cantidadresenhaspositivas,
+               j.cantidadresenhasnegativas
+        FROM juego j
+        JOIN disponibleen di ON j.gameid = di.gameid
+        JOIN plataformas p ON di.plataformaid = p.plataformaid
+        WHERE LOWER(p.plataforma) = %s
+          AND (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 1000
+        ORDER BY j.cantidadresenhaspositivas * 100.0 /
+                 (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) DESC,
+                 j.cantidadresenhaspositivas DESC
+        LIMIT 5;
+    """
+
+    try:
+        joyas_ocultas = query_db("""
+            SELECT j.nombre,
+                   ROUND(j.cantidadresenhaspositivas * 100.0 /
+                         (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 1) || '%',
+                   j.cantidadresenhaspositivas,
+                   j.cantidadresenhasnegativas
+            FROM juego j
+            WHERE (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) BETWEEN 50 AND 2000
+              AND j.cantidadresenhaspositivas * 100.0 /
+                  (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 85
+            ORDER BY j.cantidadresenhaspositivas * 100.0 /
+                     (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) DESC,
+                     j.cantidadresenhaspositivas DESC
+            LIMIT 20;
+        """)
+        top_windows = query_db(sql_plataforma, ("windows",))
+        top_mac = query_db(sql_plataforma, ("mac",))
+        top_linux = query_db(sql_plataforma, ("linux",))
+    except Exception as e:
+        error = str(e)
+
+    return render_template(
+        "index.html",
+        joyas_ocultas=joyas_ocultas,
+        top_windows=top_windows,
+        top_mac=top_mac,
+        top_linux=top_linux,
+        error=error,
+    )
 
 
 @app.route("/consulta1", methods=["GET"])

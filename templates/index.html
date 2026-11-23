@@ -17,92 +17,91 @@
     </div>
 </section>
 
-<section class="queries-grid">
-    <!-- CONSULTA 1 -->
-    <article class="db-panel">
-        <div>
-            <div class="db-panel-head">
-                <a href="{{ url_for('consulta1') }}" class="panel-title-link">Buscador de Catálogo &rarr;</a>
-                <span class="panel-tag">Consulta 1</span>
-            </div>
-
-            <div class="db-panel-rows">
-                <div class="info-row">
-                    <span class="row-key">Objetivo</span>
-                    <span class="row-val">Filtrar juegos del catálogo</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Parámetros</span>
-                    <span class="row-val val-blue">Nombre, Género, Plataforma</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Métricas</span>
-                    <span class="row-val val-green">Precio y reseñas (+ / -)</span>
-                </div>
-            </div>
+<section class="home-layout">
+    <article class="panel">
+        <div class="panel-head">
+            <h1>Joyas Ocultas</h1>
+            <span class="panel-tag">50–2,000 reseñas · ≥ 85%</span>
         </div>
 
-        <div class="db-panel-foot">
-            <a href="{{ url_for('consulta1') }}" class="btn btn-blue btn-full">Ir a Consulta 1</a>
-        </div>
-    </article>
-
-    <!-- CONSULTA 2 -->
-    <article class="db-panel">
-        <div>
-            <div class="db-panel-head">
-                <a href="{{ url_for('consulta2') }}" class="panel-title-link">Ranking de Desarrolladores &rarr;</a>
-                <span class="panel-tag">Consulta 2</span>
-            </div>
-
-            <div class="db-panel-rows">
-                <div class="info-row">
-                    <span class="row-key">Objetivo</span>
-                    <span class="row-val">Agrupar estudios por categoría</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Parámetros</span>
-                    <span class="row-val val-blue">Categoría y mínimo de juegos</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Métricas</span>
-                    <span class="row-val val-green">Total juegos y % aprobación</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="db-panel-foot">
-            <a href="{{ url_for('consulta2') }}" class="btn btn-blue btn-full">Ir a Consulta 2</a>
+        <div class="table-container">
+            <table class="db-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">#</th>
+                        <th>Juego</th>
+                        <th class="num">Aprob.</th>
+                        <th class="num">(+)</th>
+                        <th class="num">(-)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in joyas_ocultas|default([]) %}
+                    <tr>
+                        <td class="col-id muted mono">{{ loop.index }}</td>
+                        <td class="col-name">{{ row[0] }}</td>
+                        <td class="num mono pos">{{ row[1] }}</td>
+                        <td class="num mono pos">{{ row[2] }}</td>
+                        <td class="num mono neg">{{ row[3] }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-cell">
+                            Sin resultados para mostrar.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </article>
 
-    <!-- CONSULTA 3 -->
-    <article class="db-panel">
-        <div>
-            <div class="db-panel-head">
-                <a href="{{ url_for('consulta3') }}" class="panel-title-link">Estadísticas por Género &rarr;</a>
-                <span class="panel-tag">Consulta 3</span>
+    <div class="platforms-stack">
+        {% set plataformas = [
+            ("Mejores en Windows", "≥ 1,000 reseñas", top_windows),
+            ("Mejores en Mac", "≥ 1,000 reseñas", top_mac),
+            ("Mejores en Linux", "≥ 1,000 reseñas", top_linux),
+        ] %}
+
+        {% for titulo, subtitulo, filas in plataformas %}
+        <article class="panel">
+            <div class="panel-head">
+                <h1>{{ titulo }}</h1>
+                <span class="panel-tag">{{ subtitulo }}</span>
             </div>
 
-            <div class="db-panel-rows">
-                <div class="info-row">
-                    <span class="row-key">Objetivo</span>
-                    <span class="row-val">Comparar tiempo jugado</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Parámetros</span>
-                    <span class="row-val val-blue">Filtro de soporte en inglés</span>
-                </div>
-                <div class="info-row">
-                    <span class="row-key">Métricas</span>
-                    <span class="row-val val-green">Promedio vs. mediana (min)</span>
-                </div>
+            <div class="table-container">
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th class="col-id">#</th>
+                            <th>Juego</th>
+                            <th class="num">Aprob.</th>
+                            <th class="num">(+)</th>
+                            <th class="num">(-)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in filas|default([]) %}
+                        <tr>
+                            <td class="col-id muted mono">{{ loop.index }}</td>
+                            <td class="col-name">{{ row[0] }}</td>
+                            <td class="num mono pos">{{ row[1] }}</td>
+                            <td class="num mono pos">{{ row[2] }}</td>
+                            <td class="num mono neg">{{ row[3] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="empty-cell">
+                                Sin resultados para mostrar.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="db-panel-foot">
-            <a href="{{ url_for('consulta3') }}" class="btn btn-blue btn-full">Ir a Consulta 3</a>
-        </div>
-    </article>
+        </article>
+        {% endfor %}
+    </div>
 </section>
 {% endblock %}
