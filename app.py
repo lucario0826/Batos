@@ -332,7 +332,7 @@ def consulta3():
                 WHERE r.gameid = %s
                   AND {" AND ".join(conds)}
                 ORDER BY j.cantidadresenhaspositivas DESC NULLS LAST
-                LIMIT 10;
+                LIMIT 30;
             """, (gameid, *params))
 
     except Exception as e:
