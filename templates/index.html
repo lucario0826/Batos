@@ -21,7 +21,7 @@
     <article class="panel">
         <div class="panel-head">
             <h1>Joyas Ocultas</h1>
-            <span class="panel-tag">50–2,000 reseñas · ≥ 85%</span>
+            <span class="panel-tag">≤ 50,000 jugadores · ≥ 85%</span>
         </div>
 
         <div class="table-container">
@@ -30,6 +30,7 @@
                     <tr>
                         <th class="col-id">#</th>
                         <th>Juego</th>
+                        <th>Jugadores</th>
                         <th class="num">Aprob.</th>
                         <th class="num">(+)</th>
                         <th class="num">(-)</th>
@@ -40,13 +41,14 @@
                     <tr>
                         <td class="col-id muted mono">{{ loop.index }}</td>
                         <td class="col-name">{{ row[0] }}</td>
-                        <td class="num mono pos">{{ row[1] }}</td>
+                        <td class="muted mono">{{ row[1] }}</td>
                         <td class="num mono pos">{{ row[2] }}</td>
-                        <td class="num mono neg">{{ row[3] }}</td>
+                        <td class="num mono pos">{{ row[3] }}</td>
+                        <td class="num mono neg">{{ row[4] }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="empty-cell">
+                        <td colspan="6" class="empty-cell">
                             Sin resultados para mostrar.
                         </td>
                     </tr>

@@ -50,12 +50,14 @@ def index():
     try:
         joyas_ocultas = query_db("""
             SELECT j.nombre,
+                   j.cantidadduenhos,
                    ROUND(j.cantidadresenhaspositivas * 100.0 /
                          (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas), 1) || '%',
                    j.cantidadresenhaspositivas,
                    j.cantidadresenhasnegativas
             FROM juego j
-            WHERE (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) BETWEEN 50 AND 2000
+            WHERE j.cantidadduenhos IN ('0-20000', '20000-50000')
+              AND (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 20
               AND j.cantidadresenhaspositivas * 100.0 /
                   (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 85
             ORDER BY j.cantidadresenhaspositivas * 100.0 /
