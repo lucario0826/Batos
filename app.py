@@ -15,7 +15,7 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
-def query_db(sql, params=None):
+def query_db(sql, params=()):
     """Abre conexión, ejecuta la consulta y devuelve las filas."""
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
@@ -287,8 +287,7 @@ def consulta3():
                         f"{columna_j} {operadores[operador]} ({columna_r})"
                     )
 
-
-        resultados = query_db("""
+            resultados = query_db(f"""
                 SELECT
                     j.gameid,
                     j.nombre,
@@ -303,7 +302,7 @@ def consulta3():
                   AND {" AND ".join(conds)}
                 ORDER BY j.cantidadresenhaspositivas DESC NULLS LAST
                 LIMIT 50;
-        """, (gameid, *params))
+            """, (gameid, *params))
 
     except Exception as e:
         error = str(e)
@@ -326,3 +325,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(host="0.0.0.0", port=port, debug=debug)
+
