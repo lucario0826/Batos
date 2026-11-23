@@ -180,6 +180,19 @@ a { color: var(--link-blue); }
     gap: 20px;
 }
 
+.home-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.platforms-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .db-panel {
     background-color: var(--bg-panel);
     border: 1px solid var(--border-light);
@@ -617,6 +630,7 @@ code {
 
 @media (max-width: 900px) {
     .queries-grid,
+    .home-layout,
     .compare-layout {
         grid-template-columns: 1fr;
     }
