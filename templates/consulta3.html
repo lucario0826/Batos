@@ -1,66 +1,283 @@
 {% extends "base.html" %}
 
-{% block title %}Estadísticas · SteamDB CC3201{% endblock %}
+{% block title %}Comparador de Juegos · SteamDB CC3201{% endblock %}
 
 {% block content %}
+{% set ref = referencia[0] if referencia and referencia[0] is sequence and referencia[0] is not string else referencia %}
+
 <div class="breadcrumb-bar">
     <div class="breadcrumb">
         <a href="{{ url_for('index') }}">Inicio</a>
         <span>/</span>
-        <span>Estadísticas por Género</span>
+        <span>Comparador de Juegos</span>
     </div>
     <a href="{{ url_for('index') }}" class="btn btn-dark btn-sm">&larr; Volver</a>
 </div>
 
-<div class="panel">
-    <div class="panel-head">
-        <h1>Tiempo Jugado y Valoraciones por Género</h1>
-    </div>
-
-    <form action="{{ url_for('consulta3') }}" method="get" class="filter-bar">
-        <div class="field">
-            <label for="idioma">Soporte en Inglés</label>
-            <select id="idioma" name="idioma">
-                <option value="" {% if idioma_sel == '' %}selected{% endif %}>Todos</option>
-                <option value="true" {% if idioma_sel == 'true' %}selected{% endif %}>Sí (english = true)</option>
-                <option value="false" {% if idioma_sel == 'false' %}selected{% endif %}>No (english = false)</option>
-            </select>
+<form action="{{ url_for('consulta3') }}" method="get" class="compare-layout" id="compare-form">
+    <!-- Columna izquierda: selector y ficha del juego elegido -->
+    <aside class="panel compare-left">
+        <div class="panel-head">
+            <h1>Juego Base</h1>
+            <span class="panel-tag">Referencia</span>
         </div>
 
-        <div class="filter-buttons">
-            <button type="submit" class="btn btn-blue">Actualizar</button>
-        </div>
-    </form>
+        <div class="compare-selector">
+            <div class="field">
+                <label for="filtro-juego">Buscar juego</label>
+                <input
+                    type="text"
+                    id="filtro-juego"
+                    placeholder="Escribe para filtrar la lista..."
+                    autocomplete="off"
+                >
+            </div>
 
-    <div class="table-container">
-        <table class="db-table">
-            <thead>
-                <tr>
-                    <th>Género</th>
-                    <th class="num">Total Juegos</th>
-                    <th class="num">Promedio (min)</th>
-                    <th class="num">Mediana (min)</th>
-                    <th class="num">Reseñas (+)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in resultados|default([]) %}
-                <tr>
-                    <td class="col-name">{{ row[0] }}</td>
-                    <td class="num mono">{{ row[1] }}</td>
-                    <td class="num mono">{{ row[2] }}</td>
-                    <td class="num mono">{{ row[3] }}</td>
-                    <td class="num mono pos">{{ row[4] }}</td>
-                </tr>
+            <div class="field">
+                <label for="gameid">Seleccionar juego</label>
+                <select id="gameid" name="gameid" required>
+                    <option value="">-- Elige un juego --</option>
+                    {% for j in juegos|default([]) %}
+                        <option value="{{ j[0] }}" {% if gameid|string == j[0]|string %}selected{% endif %}>
+                            {{ j[1] }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-blue btn-full">Comparar juego</button>
+        </div>
+
+        {% if ref %}
+        {% set total_ref = (ref[5] or 0) + (ref[6] or 0) %}
+        {% set aprob_ref = ((ref[5] or 0) * 100.0 / total_ref)|round(1) if total_ref > 0 else none %}
+        <div class="ref-card">
+            <div class="ref-card-title">
+                <span class="ref-name">{{ ref[1] }}</span>
+                <span class="panel-tag mono">AppID {{ ref[0] }}</span>
+            </div>
+
+            <div class="db-panel-rows">
+                <div class="info-row">
+                    <span class="row-key">Lanzamiento</span>
+                    <span class="row-val mono">{{ ref[2] if ref[2] is not none else 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Año</span>
+                    <span class="row-val mono">{{ ref[3]|int if ref[3] is not none else 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Tiempo promedio</span>
+                    <span class="row-val mono">{{ ref[4] if ref[4] is not none else 0 }} min</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Reseñas (+)</span>
+                    <span class="row-val mono pos">{{ ref[5] if ref[5] is not none else 0 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Reseñas (-)</span>
+                    <span class="row-val mono neg">{{ ref[6] if ref[6] is not none else 0 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="row-key">Aprobación</span>
+                    <span class="row-val mono {% if aprob_ref is not none and aprob_ref >= 70 %}pos{% elif aprob_ref is not none and aprob_ref < 50 %}neg{% endif %}">
+                        {% if aprob_ref is not none %}{{ aprob_ref }}%{% else %}N/A{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="ref-empty">
+            <p>Elige un videojuego de la lista para ver sus estadísticas y compararlo con el resto del catálogo.</p>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- Columna derecha: criterios arriba + lista de videojuegos abajo -->
+    <section class="panel compare-right">
+        <div class="panel-head">
+            <h1>Videojuegos Comparados</h1>
+            <span class="panel-tag mono">
+                {% if ref %}
+                    {{ resultados|default([])|length }} resultado{{ 's' if resultados|default([])|length != 1 else '' }} (máx. 50)
                 {% else %}
-                <tr>
-                    <td colspan="5" class="empty-cell">
-                        Sin datos cargados. Conecta la Consulta 3 en <code>app.py</code>.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+                    Esperando selección
+                {% endif %}
+            </span>
+        </div>
+
+        <!-- Criterios de comparación -->
+        <div class="criteria-bar">
+            <div class="criteria-grid">
+                <div class="field">
+                    <label for="operador_fecha">Fecha lanzamiento</label>
+                    <select id="operador_fecha" name="operador_fecha">
+                        <option value="" {% if not operador_fecha %}selected{% endif %}>Cualquiera</option>
+                        <option value="mayor" {% if operador_fecha == 'mayor' %}selected{% endif %}>Posterior (&gt;)</option>
+                        <option value="menor" {% if operador_fecha == 'menor' %}selected{% endif %}>Anterior (&lt;)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="operador_anio">Año</label>
+                    <select id="operador_anio" name="operador_anio">
+                        <option value="" {% if not operador_anio %}selected{% endif %}>Cualquiera</option>
+                        <option value="mayor" {% if operador_anio == 'mayor' %}selected{% endif %}>Mayor (&gt;)</option>
+                        <option value="menor" {% if operador_anio == 'menor' %}selected{% endif %}>Menor (&lt;)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="operador_tiempo">Tiempo jugado</label>
+                    <select id="operador_tiempo" name="operador_tiempo">
+                        <option value="" {% if not operador_tiempo %}selected{% endif %}>Cualquiera</option>
+                        <option value="mayor" {% if operador_tiempo == 'mayor' %}selected{% endif %}>Más tiempo (&gt;)</option>
+                        <option value="menor" {% if operador_tiempo == 'menor' %}selected{% endif %}>Menos tiempo (&lt;)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="operador_positivas">Reseñas (+)</label>
+                    <select id="operador_positivas" name="operador_positivas">
+                        <option value="" {% if not operador_positivas %}selected{% endif %}>Cualquiera</option>
+                        <option value="mayor" {% if operador_positivas == 'mayor' %}selected{% endif %}>Más positivas (&gt;)</option>
+                        <option value="menor" {% if operador_positivas == 'menor' %}selected{% endif %}>Menos positivas (&lt;)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="operador_negativas">Reseñas (-)</label>
+                    <select id="operador_negativas" name="operador_negativas">
+                        <option value="" {% if not operador_negativas %}selected{% endif %}>Cualquiera</option>
+                        <option value="mayor" {% if operador_negativas == 'mayor' %}selected{% endif %}>Más negativas (&gt;)</option>
+                        <option value="menor" {% if operador_negativas == 'menor' %}selected{% endif %}>Menos negativas (&lt;)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="criteria-actions">
+                <button type="submit" class="btn btn-blue">Aplicar criterios</button>
+                {% if gameid %}
+                    <a href="{{ url_for('consulta3', gameid=gameid) }}" class="btn btn-dark">Limpiar criterios</a>
+                {% endif %}
+                <a href="{{ url_for('consulta3') }}" class="btn btn-dark">Reiniciar</a>
+            </div>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div class="table-container">
+            <table class="db-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">AppID</th>
+                        <th>Nombre</th>
+                        <th>Lanzamiento</th>
+                        <th class="num">Año</th>
+                        <th class="num">Prom. (min)</th>
+                        <th class="num">Reseñas (+)</th>
+                        <th class="num">Reseñas (-)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in resultados|default([]) %}
+                    <tr>
+                        <td class="col-id mono">{{ row[0] }}</td>
+                        <td class="col-name">
+                            <a
+                                class="game-swap-link"
+                                title="Usar como juego base"
+                                href="{{ url_for('consulta3',
+                                    gameid=row[0],
+                                    operador_fecha=operador_fecha,
+                                    operador_anio=operador_anio,
+                                    operador_tiempo=operador_tiempo,
+                                    operador_positivas=operador_positivas,
+                                    operador_negativas=operador_negativas) }}"
+                            >{{ row[1] }}</a>
+                        </td>
+                        <td class="muted mono">
+                            {{ row[2] if row[2] is not none else 'N/A' }}
+                            {% if ref and row[2] is not none and ref[2] is not none %}
+                                {% if row[2] > ref[2] %}<span class="diff-up" title="Más reciente">▲</span>{% elif row[2] < ref[2] %}<span class="diff-down" title="Más antiguo">▼</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="num mono muted">
+                            {{ row[3]|int if row[3] is not none else 'N/A' }}
+                        </td>
+                        <td class="num mono">
+                            {{ row[4] if row[4] is not none else 0 }}
+                            {% if ref and row[4] is not none and ref[4] is not none %}
+                                {% if row[4] > ref[4] %}<span class="diff-up" title="Más tiempo jugado">▲</span>{% elif row[4] < ref[4] %}<span class="diff-down" title="Menos tiempo jugado">▼</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="num mono pos">
+                            {{ row[5] if row[5] is not none else 0 }}
+                            {% if ref and row[5] is not none and ref[5] is not none %}
+                                {% if row[5] > ref[5] %}<span class="diff-up" title="Más reseñas positivas">▲</span>{% elif row[5] < ref[5] %}<span class="diff-down" title="Menos reseñas positivas">▼</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="num mono neg">
+                            {{ row[6] if row[6] is not none else 0 }}
+                            {% if ref and row[6] is not none and ref[6] is not none %}
+                                {% if row[6] > ref[6] %}<span class="diff-down" title="Más reseñas negativas">▲</span>{% elif row[6] < ref[6] %}<span class="diff-up" title="Menos reseñas negativas">▼</span>{% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="empty-cell">
+                            {% if ref %}
+                                Ningún videojuego cumple con todos los criterios seleccionados respecto a <strong>{{ ref[1] }}</strong>.
+                            {% else %}
+                                Selecciona un juego en el panel izquierdo y elige tus criterios para comenzar a comparar.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</form>
+
+<script>
+(function () {
+    const input = document.getElementById("filtro-juego");
+    const select = document.getElementById("gameid");
+    if (!input || !select) return;
+
+    const allOptions = Array.from(select.options).map(opt => ({
+        value: opt.value,
+        text: opt.text,
+        lower: opt.text.toLowerCase(),
+        selected: opt.selected
+    }));
+
+    input.addEventListener("input", function () {
+        const term = this.value.trim().toLowerCase();
+        const currentVal = select.value;
+
+        const frag = document.createDocumentFragment();
+        let added = 0;
+
+        for (let i = 0; i < allOptions.length; i++) {
+            const item = allOptions[i];
+            const isPlaceholder = item.value === "";
+            const isSelected = item.value === currentVal && currentVal !== "";
+            if (isPlaceholder || isSelected || !term || item.lower.includes(term)) {
+                const opt = document.createElement("option");
+                opt.value = item.value;
+                opt.text = item.text;
+                if (item.value === currentVal) opt.selected = true;
+                frag.appendChild(opt);
+                added++;
+                if (term && added >= 250) break;
+            }
+        }
+
+        select.innerHTML = "";
+        select.appendChild(frag);
+    });
+})();
+</script>
 {% endblock %}
