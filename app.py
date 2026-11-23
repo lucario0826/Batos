@@ -56,7 +56,7 @@ def index():
                    j.cantidadresenhaspositivas,
                    j.cantidadresenhasnegativas
             FROM juego j
-            WHERE j.cantidadduenhos IN ('0-20000', '20000-50000')
+            WHERE j.cantidadduenhos = '0-20000'
               AND (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 20
               AND j.cantidadresenhaspositivas * 100.0 /
                   (j.cantidadresenhaspositivas + j.cantidadresenhasnegativas) >= 85
