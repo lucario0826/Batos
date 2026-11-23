@@ -15,7 +15,7 @@ DB_CONFIG = {
     "password": os.environ.get("DB_PASSWORD", ""),
 }
 
-def query_db(sql, params=()):
+def query_db(sql, params=None):
     """Abre conexión, ejecuta la consulta y devuelve las filas."""
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
